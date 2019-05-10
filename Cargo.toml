@@ -1,6 +1,6 @@
 [package]
 name = "pow"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Andrew Dirksen <andrew@dirksen.com>"]
 description = """
 Generate or verify sha256 based proofs of work over arbitrary typed data.
