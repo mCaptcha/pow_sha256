@@ -86,6 +86,7 @@
 //! Conversely, to calculate probable number of hashes required to satisfy a given minimum
 //! difficulty.
 //!
+//! ```
 //! fn average(difficulty: u128) -> u128 {
 //!     let m = u128::max_value();
 //!     if difficulty == m {
@@ -93,6 +94,7 @@
 //!     } 
 //!     m / (m - difficulty)
 //! }
+//! ```
 
 mod proof_of_work;
 
