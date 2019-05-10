@@ -1,11 +1,14 @@
 [package]
 name = "pow"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Andrew Dirksen <andrew@dirksen.com>"]
 description = """
-Tag arbitrary data types with proof of work based on sha256.
+Generate or verify sha256 based proofs of work over arbitrary typed data.
 """
 edition = "2018"
+documentation = "https://docs.rs/pow"
+tags = ["proof of work", "pw set", "powtag", "tag"]
+readme = "readme.md"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
