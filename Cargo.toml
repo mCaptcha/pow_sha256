@@ -2,6 +2,9 @@
 name = "pow"
 version = "0.1.0"
 authors = ["Andrew Dirksen <andrew@dirksen.com>"]
+description = """
+Tag arbitrary data types with proof of work based on sha256.
+"""
 edition = "2018"
 license = "MIT OR Apache-2.0"
 

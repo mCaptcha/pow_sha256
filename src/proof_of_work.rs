@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 
 const SALT: &'static str = "35af8f4890981391c191e6df45b5f780812ddf0213f29299576ac1c98e18173e";
 
+/// Proof of work over concrete type T. T can be any type that implements serde::Serialize.
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug)]
 pub struct Pow<T: Serialize> {
     proof: u128,
@@ -21,7 +22,7 @@ impl<T: Serialize> Pow<T> {
     /// on a general purpose processor.
     ///
     /// Returns bincode::Error if serialization fails.
-    pub fn prove_work(t: &T, difficulty: u32) -> bincode::Result<Pow<T>> {
+    pub fn prove_work(t: &T, difficulty: u128) -> bincode::Result<Pow<T>> {
         bincode_cfg()
             .serialize(t)
             .map(|v| Self::prove_work_serialized(&v, difficulty))
@@ -32,8 +33,7 @@ impl<T: Serialize> Pow<T> {
     ///
     /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
     /// on a general purpose processor.
-    pub fn prove_work_serialized(prefix: &[u8], difficulty: u32) -> Pow<T> {
-        debug_assert!(difficulty <= 256);
+    pub fn prove_work_serialized(prefix: &[u8], difficulty: u128) -> Pow<T> {
         let prefix_sha = Sha256::new().chain(SALT).chain(prefix);
         let mut n = 0;
         while score(prefix_sha.clone(), n) < difficulty {
@@ -46,7 +46,7 @@ impl<T: Serialize> Pow<T> {
     }
 
     /// Calculate the pow score of t and self.
-    pub fn score(&self, t: &T) -> bincode::Result<u32> {
+    pub fn score(&self, t: &T) -> bincode::Result<u128> {
         bincode_cfg()
             .serialize(t)
             .map(|v| self.score_serialized(&v))
@@ -54,13 +54,13 @@ impl<T: Serialize> Pow<T> {
 
     /// Calculate the pow score of an already serialized T and self.
     /// The input is assumed to be serialized using network byte order.
-    pub fn score_serialized(&self, target: &[u8]) -> u32 {
+    pub fn score_serialized(&self, target: &[u8]) -> u128 {
         score(Sha256::new().chain(SALT).chain(target), self.proof)
     }
 }
 
-fn score(prefix_sha: Sha256, proof: u128) -> u32 {
-    leading_zeros(
+fn score(prefix_sha: Sha256, proof: u128) -> u128 {
+    first_bytes_as_u128(
         prefix_sha
             .chain(&proof.to_be_bytes()) // to_be_bytes() converts to network endian
             .fixed_result()
@@ -68,17 +68,11 @@ fn score(prefix_sha: Sha256, proof: u128) -> u32 {
     )
 }
 
-fn leading_zeros(inp: &[u8]) -> u32 {
-    let mut ret = 0;
-    for n in inp {
-        if n == &0 {
-            ret += 8;
-        } else {
-            ret += n.leading_zeros();
-            break;
-        }
-    }
-    return ret;
+/// # Panics
+///
+/// panics if inp.len() < 16
+fn first_bytes_as_u128(inp: &[u8]) -> u128 {
+    bincode_cfg().deserialize(&inp).unwrap()
 }
 
 fn bincode_cfg() -> bincode::Config {
@@ -91,7 +85,7 @@ fn bincode_cfg() -> bincode::Config {
 mod test {
     use super::*;
 
-    const DIFFICULTY: u32 = 10;
+    const DIFFICULTY: u128 = 0xff000000000000000000000000000000;
 
     #[test]
     fn base_functionality() {
