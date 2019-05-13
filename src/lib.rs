@@ -63,7 +63,7 @@
 //! # Serialization encoding.
 //!
 //! It shouldn't matter to users of this library, but the bincode crate is used for cheap
-//! derterministic serialization. All values are serialized using network byte order.
+//! deterministic serialization. All values are serialized using network byte order.
 //!
 //! # Threshold scheme
 //!

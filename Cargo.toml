@@ -1,15 +1,17 @@
 [package]
 name = "pow"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Andrew Dirksen <andrew@dirksen.com>"]
 description = """
 Generate or verify sha256 based proofs of work over arbitrary typed data.
 """
 edition = "2018"
 documentation = "https://docs.rs/pow"
-tags = ["proof of work", "pw set", "powtag", "tag"]
+keywords = ["pwset", "powtag", "tag"]
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/bddap/pow"
+categories = [] # pr me!
 
 [dependencies]
 sha2 = "0.8.0"
