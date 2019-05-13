@@ -6,7 +6,7 @@
 //!
 //! Prove we did work targeting a phrase.
 //!
-//! ```
+//! ```rust
 //! use pow::Pow;
 //!
 //! // very easy mode
@@ -19,7 +19,7 @@
 //!
 //! Prove more difficult work. This time targeting a time.
 //!
-//! ```
+//! ```rust
 //! # fn get_unix_time_seconds() -> u64 {
 //! #     use std::time::{Duration, SystemTime};
 //! #     SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
@@ -45,7 +45,7 @@
 //!
 //! In other words:
 //!
-//! ```
+//! ```rust
 //! # use serde::Serialize;
 //! # use pow::Pow;
 //! # use core::any::Any;
@@ -75,7 +75,7 @@
 //!
 //! To manually select a difficulty, choose the average number of hashes required.
 //!
-//! ```
+//! ```rust
 //! fn difficulty(average: u128) -> u128 {
 //!     debug_assert_ne!(average, 0, "It is impossible to prove work in zero attempts.");
 //!     let m = u128::max_value();
@@ -86,7 +86,7 @@
 //! Conversely, to calculate probable number of hashes required to satisfy a given minimum
 //! difficulty.
 //!
-//! ```
+//! ```rust
 //! fn average(difficulty: u128) -> u128 {
 //!     let m = u128::max_value();
 //!     if difficulty == m {

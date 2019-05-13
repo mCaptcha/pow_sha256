@@ -8,7 +8,7 @@ Any type that implementes serde::Deserialize can be tagged with a proof of work.
 
 Prove we did work targeting a phrase.
 
-```
+```rust
 use pow::Pow;
 
 // very easy mode
@@ -21,7 +21,7 @@ assert!(pw.score(&phrase).unwrap() >= difficulty);
 
 Prove more difficult work. This time targeting a time.
 
-```
+```rust
 // more diffcult, takes around 100_000 hashes to generate proof
 let difficulty = u128::max_value() - u128::max_value() / 100_000;
 
@@ -41,7 +41,7 @@ of work blockchains.
 
 In other words:
 
-```
+```rust
 fn score<T: Serialize>(target: &T, pow_tag: &Pow<T>) -> u128 {
     let bytes = serialize(&SALT) + serialize(target) + serialize(pow_tag);
     let hash = sha256(&bytes);
@@ -64,7 +64,7 @@ Difficulty settings are usually best adjusted dynamically a la bitcoin.
 
 To manually select a difficulty, choose the average number of hashes required.
 
-```
+```rust
 fn difficulty(average: u128) -> u128 {
     debug_assert_ne!(average, 0, "It is impossible to prove work in zero attempts.");
     let m = u128::max_value();
@@ -75,7 +75,7 @@ fn difficulty(average: u128) -> u128 {
 Conversely, to calculate probable number of hashes required to satisfy a given minimum
 difficulty.
 
-```
+```rust
 fn average(difficulty: u128) -> u128 {
     let m = u128::max_value();
     if difficulty == m {
