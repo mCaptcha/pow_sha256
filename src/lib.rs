@@ -33,7 +33,18 @@
 //! let pw = Pow::prove_work(&now, difficulty).unwrap();
 //! assert!(pw.score(&now).unwrap() >= difficulty);
 //! ```
-
+//!
+//! Define a blockchain block.
+//!
+//! ```rust
+//! # use pow::Pow;
+//! struct Block<T> {
+//!     prev: [u8; 32], // hash of last block
+//!     payload: T,     // generic data
+//!     proof_of_work: Pow<([u8; 32], T)>,
+//! }
+//! ```
+//!
 //! # Score scheme
 //!
 //! To score a proof of work for a given (target, Pow) pair:
@@ -91,7 +102,7 @@
 //!     let m = u128::max_value();
 //!     if difficulty == m {
 //!         return m;
-//!     } 
+//!     }
 //!     m / (m - difficulty)
 //! }
 //! ```
