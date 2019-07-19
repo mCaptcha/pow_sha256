@@ -94,3 +94,7 @@ fn average(difficulty: u128) -> u128 {
     m / (m - difficulty)
 }
 ```
+
+# License
+
+This project is licensed under either of Apache License, Version 2.0 or MIT license, at your option.
