@@ -1,5 +1,5 @@
 [package]
-name = "PoW-SHA256"
+name = "PoW_SHA256"
 version = "0.1.0"
 authors = ["Robert Kornacki <robk@syre.io>"]
 description = """
