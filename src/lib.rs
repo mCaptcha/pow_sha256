@@ -7,8 +7,8 @@ const SALT: &str = "79ziepia7vhjgviiwjhnend3ofjqocsi2winc4ptqhmkvcajihywxcizewvc
 /// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug)]
 pub struct PoW<T> {
-    nonce: u128,
-    result: u128,
+    pub nonce: u128,
+    pub result: u128,
     _spook: PhantomData<T>,
 }
 
