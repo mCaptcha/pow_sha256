@@ -102,6 +102,7 @@ mod test {
         let phrase = b"Ex nihilo nihil fit.".to_vec();
         let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
         assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
+        assert!(pw.result >= DIFFICULTY);
         assert!(pw.is_valid_proof(&phrase));
     }
 
@@ -112,6 +113,9 @@ mod test {
         let pwpw: PoW<PoW<String>> = PoW::prove_work(&pw, DIFFICULTY).unwrap();
         assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
         assert!(pwpw.calculate(&pw).unwrap() >= DIFFICULTY);
+        assert!(pw.result >= DIFFICULTY);
+        assert!(pwpw.result >= DIFFICULTY);
+        assert!(pw.is_valid_proof(&phrase));
         assert!(pwpw.is_valid_proof(&pw));
     }
 
