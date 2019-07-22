@@ -1,6 +1,8 @@
 # PoW-SHA256
 
-Rust crate which generates SHA256 Proofs of Work on serializable datatypes. Any type that implements `serde::Deserialize` can be used.
+Rust crate which generates SHA256 Proofs of Work on serializable datatypes. 
+
+Any type that implements `serde::Deserialize` can be used.
 
 This is a fork of the [`Pow` library](https://github.com/bddap/pow) by bddap with some new additions. Primary of these being:
 
@@ -45,33 +47,16 @@ struct Block<T> {
 }
 ```
 
-# Score scheme
+# Hashing Scheme
 
-To score a proof of work for a given (target, PoW) pair:
-Sha256 is calculated over the concatenation SALT + target + PoW.
-The first 16 bytes of the hash are interpreted as a 128 bit unsigned integer.
-That integer is the score.
-A constant, SALT, is used as prefix to prevent PoW reuse from other systems such as proof
-of work blockchains.
+SHA256 is calculated over the concatenation of the:
+- SALT
+- Serialized Input `T` 
+- Nonce
 
-In other words:
+The first 16 bytes of the resulting hash are interpreted as a 128 bit unsigned integer.
 
-```rust
-fn score<T: Serialize>(target: &T, PoW_tag: &PoW<T>) -> u128 {
-    let bytes = serialize(&SALT) + serialize(target) + serialize(PoW_tag);
-    let hash = sha256(&bytes);
-    deserialize(&hash[..16])
-}
-```
-
-# Serialization encoding.
-
-It shouldn't matter to users of this library, but the bincode crate is used for cheap
-deterministic serialization. All values are serialized using network byte order.
-
-# Threshold scheme
-
-Given a minimum score m. A PoW p satisfies the minimum score for target t iff score(t, p) >= m.
+A randomly generated constant, `SALT`, is used as prefix to prevent PoW reuse from other systems such as proof of work blockchains.
 
 # Choosing a difficulty setting.
 
@@ -102,4 +87,4 @@ fn average(difficulty: u128) -> u128 {
 
 # License
 
-This project is licensed under either of Apache License, Version 2.0 or MIT license, at your option.
+This project is dual-licensed under `Apache License Version 2.0` & `MIT license`.
