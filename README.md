@@ -47,20 +47,21 @@ assert!(pw.is_valid_proof(&phrase))
 
 # Hashing Scheme
 
+A randomly generated constant, `SALT`, is used as prefix to prevent PoW reuse from other systems such as proof of work blockchains.
+
 SHA256 is calculated over the concatenation of the:
 - SALT
 - Serialized Input `T` 
 - Nonce
 
-The first 16 bytes of the resulting hash are interpreted as a 128 bit unsigned integer.
+The first 16 bytes of the resulting hash are interpreted as a 128 bit unsigned integer and saved as the final result.
 
-A randomly generated constant, `SALT`, is used as prefix to prevent PoW reuse from other systems such as proof of work blockchains.
 
 # Choosing a difficulty setting.
 
 Depending on your use case, difficulty settings often are best set dynamically a la bitcoin.
 
-However if your use case requires manual setting then it is trivial to set one yourself. One way to manually select a difficulty is to choose the average Hnumber of hashes desired with a function like this:
+However if your use case requires manual setting then it is trivial to set one yourself. One way to do so is to choose the average number of hashes desired with a function like this:
 
 ```rust
 fn get_difficulty(average: u128) -> u128 {
