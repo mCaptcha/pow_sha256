@@ -61,6 +61,13 @@ impl<T: Serialize> PoW<T> {
     pub fn calculate_serialized(&self, target: &[u8]) -> u128 {
         score(Sha256::new().chain(SALT).chain(target), self.nonce)
     }
+
+    pub fn is_valid_proof(&self, t: &T) -> bool {
+        if self.result == self.calculate(t).unwrap() {
+            return true;
+        }
+        return false;
+    }
 }
 
 fn score(prefix_sha: Sha256, nonce: u128) -> u128 {
@@ -94,18 +101,29 @@ mod test {
     #[test]
     fn base_functionality() {
         // Let's prove we did work targeting a phrase.
-        let phrase = b"Corver bandar palladianism retroform.".to_vec();
+        let phrase = b"Ex nihilo nihil fit.".to_vec();
         let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
         assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
+        assert!(pw.is_valid_proof(&phrase));
     }
 
     #[test]
     fn double_pow() {
-        let phrase = "Corver bandar palladianism retroform.".to_owned();
-        let PoW = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
-        let PoWPoW: PoW<PoW<String>> = PoW::prove_work(&PoW, DIFFICULTY).unwrap();
-        assert!(PoW.calculate(&phrase).unwrap() >= DIFFICULTY);
-        assert!(PoWPoW.calculate(&PoW).unwrap() >= DIFFICULTY);
+        let phrase = "Ex nihilo nihil fit.".to_owned();
+        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
+        let pwpw: PoW<PoW<String>> = PoW::prove_work(&pw, DIFFICULTY).unwrap();
+        assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
+        assert!(pwpw.calculate(&pw).unwrap() >= DIFFICULTY);
+    }
+
+    #[test]
+    fn is_not_valid_proof() {
+        let phrase = "Ex nihilo nihil fit.".to_owned();
+        let phrase2 = "Omne quod movetur ab alio movetur.".to_owned();
+        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
+        let pw2 = PoW::prove_work(&phrase2, DIFFICULTY).unwrap();
+        assert!(!pw.is_valid_proof(&phrase2));
+        assert!(!pw2.is_valid_proof(&phrase));
     }
 
     #[test]
