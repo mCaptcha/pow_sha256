@@ -6,7 +6,6 @@ description = """
 SHA256 PoW on any serializable datatype.
 """
 edition = "2018"
-# documentation = "https://docs.rs/PoW"
 keywords = ["PoW", "sha256", "proof-of-work"]
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
@@ -14,5 +13,5 @@ repository = "https://github.com/robkorn/pow"
 categories = [] # pr me!
 [dependencies]
 sha2 = "0.8.0"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1.0.97", features = ["derive"] }
 bincode = "1.1.4"

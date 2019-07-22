@@ -1,112 +1,139 @@
-//  Sha256 based proof of work over a typed piece of data.
+use serde::{Deserialize, Serialize};
+use sha2::{digest::FixedOutput, Digest, Sha256};
+use std::marker::PhantomData;
 
-//  Any type that implementes serde::Deserialize can be tagged with a proof of work.
+const SALT: &str = "79ziepia7vhjgviiwjhnend3ofjqocsi2winc4ptqhmkvcajihywxcizewvckg9h6gs4j83v9";
 
-//  # Examples
+/// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug)]
+pub struct PoW<T> {
+    nonce: u128,
+    result: u128,
+    _spook: PhantomData<T>,
+}
 
-//  Prove we did work targeting a phrase.
+impl<T: Serialize> PoW<T> {
+    /// Create Proof of Work over item of type T.
+    ///
+    /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
+    /// on a general purpose processor.
+    ///
+    /// Returns bincode::Error if serialization fails.
+    pub fn prove_work(t: &T, difficulty: u128) -> bincode::Result<PoW<T>> {
+        bincode_cfg()
+            .serialize(t)
+            .map(|v| Self::prove_work_serialized(&v, difficulty))
+    }
 
-//  ```rust
-//  use PoW::PoW;
+    /// Create Proof of Work on an already serialized item of type T.
+    /// The input is assumed to be serialized using network byte order.
+    ///
+    /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
+    /// on a general purpose processor.
+    pub fn prove_work_serialized(prefix: &[u8], difficulty: u128) -> PoW<T> {
+        let prefix_sha = Sha256::new().chain(SALT).chain(prefix);
+        let mut n = 0;
+        let mut result = 0;
+        while result < difficulty {
+            n += 1;
+            result = score(prefix_sha.clone(), n);
+        }
+        PoW {
+            nonce: n,
+            result: result,
+            _spook: PhantomData,
+        }
+    }
 
-//  // very easy mode
-//  let difficulty = u128::max_value() - u128::max_value() / 2;
+    /// Calculate the PoW score with the provided input T.
+    pub fn calculate(&self, t: &T) -> bincode::Result<u128> {
+        bincode_cfg()
+            .serialize(t)
+            .map(|v| self.calculate_serialized(&v))
+    }
 
-//  let phrase = b"Phrase to tag.".to_vec();
-//  let pw = PoW::prove_work(&phrase, difficulty).unwrap();
-//  assert!(pw.calculate(&phrase).unwrap() >= difficulty);
-//  ```
+    /// Calculate the PoW score of an already serialized T and self.
+    /// The input is assumed to be serialized using network byte order.
+    pub fn calculate_serialized(&self, target: &[u8]) -> u128 {
+        score(Sha256::new().chain(SALT).chain(target), self.nonce)
+    }
 
-//  Prove more difficult work. This time targeting a time.
+    /// Verifies that the PoW is indeed generated out of the phrase provided.
+    pub fn is_valid_proof(&self, t: &T) -> bool {
+        match self.calculate(t) {
+            Ok(res) => if self.result == res {return true;},
+            Err(_) => return false 
+        }
+        return false;
+    }
+}
 
-//  ```rust
-//  # fn get_unix_time_seconds() -> u64 {
-//  #     use std::time::{Duration, SystemTime};
-//  #     SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()
-//  # }
-//  # use PoW::PoW;
+fn score(prefix_sha: Sha256, nonce: u128) -> u128 {
+    first_bytes_as_u128(
+        prefix_sha
+            .chain(&nonce.to_be_bytes()) // to_be_bytes() converts to network endian
+            .fixed_result()
+            .as_slice(),
+    )
+}
 
-//  // more diffcult, takes around 100_000 hashes to generate proof
-//  let difficulty = u128::max_value() - u128::max_value() / 100_000;
+/// # Panics
+///
+/// panics if inp.len() < 16
+fn first_bytes_as_u128(inp: &[u8]) -> u128 {
+    bincode_cfg().deserialize(&inp).unwrap()
+}
 
-//  let now: u64 = get_unix_time_seconds();
-//  let pw = PoW::prove_work(&now, difficulty).unwrap();
-//  assert!(pw.calculate(&now).unwrap() >= difficulty);
-//  ```
+fn bincode_cfg() -> bincode::Config {
+    let mut cfg = bincode::config();
+    cfg.big_endian();
+    cfg
+}
 
-//  Define a blockchain block.
+#[cfg(test)]
+mod test {
+    use super::*;
 
-//  ```rust
-//  # use PoW::PoW;
-//  struct Block<T> {
-//      prev: [u8; 32], // hash of last block
-//      payload: T,     // generic data
-//      proof_of_work: PoW<([u8; 32], T)>,
-//  }
-//  ```
+    const DIFFICULTY: u128 = 0xff000000000000000000000000000000;
 
-//  # Score scheme
+    #[test]
+    fn base_functionality() {
+        // Let's prove we did work targeting a phrase.
+        let phrase = b"Ex nihilo nihil fit.".to_vec();
+        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
+        assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
+        assert!(pw.is_valid_proof(&phrase));
+    }
 
-//  To score a proof of work for a given (target, PoW) pair:
-//  Sha256 is calculated over the concatenation SALT + target + PoW.
-//  The first 16 bytes of the hash are interpreted as a 128 bit unsigned integer.
-//  That integer is the score.
-//  A constant, SALT, is used as prefix to prevent PoW reuse from other systems such as proof
-//  of work blockchains.
+    #[test]
+    fn double_pow() {
+        let phrase = "Ex nihilo nihil fit.".to_owned();
+        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
+        let pwpw: PoW<PoW<String>> = PoW::prove_work(&pw, DIFFICULTY).unwrap();
+        assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
+        assert!(pwpw.calculate(&pw).unwrap() >= DIFFICULTY);
+        assert!(pwpw.is_valid_proof(&pw));
+    }
 
-//  In other words:
+    #[test]
+    fn is_not_valid_proof() {
+        let phrase = "Ex nihilo nihil fit.".to_owned();
+        let phrase2 = "Omne quod movetur ab alio movetur.".to_owned();
+        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
+        let pw2 = PoW::prove_work(&phrase2, DIFFICULTY).unwrap();
+        assert!(!pw.is_valid_proof(&phrase2));
+        assert!(!pw2.is_valid_proof(&phrase));
+    }
 
-//  ```rust
-//  # use serde::Serialize;
-//  # use PoW::PoW;
-//  # use core::any::Any;
-//  # const SALT: &'static str = "not the actual salt used";
-//  # fn serialize<T: Serialize>(_: &T) -> u8 { 0 } // not the actual serialize function
-//  # fn deserialize(_: &[u8]) -> u128 { 0 } // not the actual deserialize function
-//  # fn sha256(_: &u8) -> [u8; 32] { [0; 32] } // not the actual sha256 function
-//  fn score<T: Serialize>(target: &T, PoW_tag: &PoW<T>) -> u128 {
-//      let bytes = serialize(&SALT) + serialize(target) + serialize(PoW_tag);
-//      let hash = sha256(&bytes);
-//      deserialize(&hash[..16])
-//  }
-//  ```
-
-//  # Serialization encoding.
-
-//  It shouldn't matter to users of this library, but the bincode crate is used for cheap
-//  deterministic serialization. All values are serialized using network byte order.
-
-//  # Threshold scheme
-
-//  Given a minimum score m. A PoW p satisfies the minimum score for target t iff score(t, p) >= m.
-
-//  # Choosing a difficulty setting.
-
-//  Difficulty settings are usually best adjusted dynamically a la bitcoin.
-
-//  To manually select a difficulty, choose the average number of hashes required.
-
-//  ```rust
-//  fn difficulty(average: u128) -> u128 {
-//      debug_assert_ne!(average, 0, "It is impossible to prove work in zero attempts.");
-//      let m = u128::max_value();
-//      m - m / average
-//  }
-//  ```
-
-//  Conversely, to calculate probable number of hashes required to satisfy a given minimum
-//  difficulty.
-
-//  ```rust
-//  fn average(difficulty: u128) -> u128 {
-//      let m = u128::max_value();
-//      if difficulty == m {
-//          return m;
-//      }
-//      m / (m - difficulty)
-//  }
-//  ```
-
-mod proof_of_work;
-
-pub use proof_of_work::PoW;
+    #[test]
+    fn serialization_test() {
+        let target: u8 = 1;
+        let pw = PoW::prove_work(&target, DIFFICULTY).unwrap();
+        let message: (u8, PoW<u8>) = (target, pw);
+        let message_ser = bincode_cfg().serialize(&message).unwrap();
+        let recieved_message: (u8, PoW<u8>) = bincode_cfg().deserialize(&message_ser).unwrap();
+        assert_eq!(recieved_message, message);
+        assert!(message.1.calculate(&message.0).unwrap() >= DIFFICULTY);
+        assert!(message.1.is_valid_proof(&target));
+    }
+}

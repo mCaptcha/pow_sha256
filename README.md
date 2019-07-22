@@ -1,8 +1,13 @@
-# PoW
+# PoW-SHA256
 
-Sha256 based proof of work over a typed piece of data.
+Rust crate which generates SHA256 Proofs of Work on serializable datatypes. Any type that implements `serde::Deserialize` can be used.
 
-Any type that implementes serde::Deserialize can be tagged with a proof of work.
+This is a fork of the [`Pow` library](https://github.com/bddap/pow) by bddap with some new additions. Primary of these being:
+
+- PoW datatype now saves the calculation result to be used for checking proof validity given input
+- `is_valid_proof` method to do the above mentioned
+
+Other small changes have also been included of various importance but mostly just stylistic/ease of use improvements.
 
 # Examples
 
