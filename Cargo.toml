@@ -1,19 +1,18 @@
 [package]
-name = "pow"
-version = "0.1.5"
-authors = ["Andrew Dirksen <andrew@dirksen.com>"]
+name = "PoW-SHA256"
+version = "0.1.0"
+authors = ["Robert Kornacki <robk@syre.io>"]
 description = """
-Generate or verify sha256 based proofs of work over arbitrary typed data.
+SHA256 PoW on any serializable datatype.
 """
 edition = "2018"
-documentation = "https://docs.rs/pow"
-keywords = ["pwset", "powtag", "tag"]
+# documentation = "https://docs.rs/PoW"
+keywords = ["PoW", "sha256", "proof-of-work"]
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/bddap/pow"
+repository = "https://github.com/robkorn/pow"
 categories = [] # pr me!
-
 [dependencies]
 sha2 = "0.8.0"
 serde = { version = "1", features = ["derive"] }
-bincode = "1.1.3"
+bincode = "1.1.4"

@@ -1,4 +1,4 @@
-# Pow
+# PoW
 
 Sha256 based proof of work over a typed piece of data.
 
@@ -9,13 +9,13 @@ Any type that implementes serde::Deserialize can be tagged with a proof of work.
 Prove we did work targeting a phrase.
 
 ```rust
-use pow::Pow;
+use PoW::PoW;
 
 // very easy mode
 let difficulty = u128::max_value() - u128::max_value() / 2;
 
 let phrase = b"Phrase to tag.".to_vec();
-let pw = Pow::prove_work(&phrase, difficulty).unwrap();
+let pw = PoW::prove_work(&phrase, difficulty).unwrap();
 assert!(pw.score(&phrase).unwrap() >= difficulty);
 ```
 
@@ -26,7 +26,7 @@ Prove more difficult work. This time targeting a time.
 let difficulty = u128::max_value() - u128::max_value() / 100_000;
 
 let now: u64 = get_unix_time_seconds();
-let pw = Pow::prove_work(&now, difficulty).unwrap();
+let pw = PoW::prove_work(&now, difficulty).unwrap();
 assert!(pw.score(&now).unwrap() >= difficulty);
 ```
 
@@ -36,24 +36,24 @@ Define a blockchain block.
 struct Block<T> {
     prev: [u8; 32], // hash of last block
     payload: T,     // generic data
-    proof_of_work: Pow<([u8; 32], T)>,
+    proof_of_work: PoW<([u8; 32], T)>,
 }
 ```
 
 # Score scheme
 
-To score a proof of work for a given (target, Pow) pair:
-Sha256 is calculated over the concatenation SALT + target + Pow.
+To score a proof of work for a given (target, PoW) pair:
+Sha256 is calculated over the concatenation SALT + target + PoW.
 The first 16 bytes of the hash are interpreted as a 128 bit unsigned integer.
 That integer is the score.
-A constant, SALT, is used as prefix to prevent pow reuse from other systems such as proof
+A constant, SALT, is used as prefix to prevent PoW reuse from other systems such as proof
 of work blockchains.
 
 In other words:
 
 ```rust
-fn score<T: Serialize>(target: &T, pow_tag: &Pow<T>) -> u128 {
-    let bytes = serialize(&SALT) + serialize(target) + serialize(pow_tag);
+fn score<T: Serialize>(target: &T, PoW_tag: &PoW<T>) -> u128 {
+    let bytes = serialize(&SALT) + serialize(target) + serialize(PoW_tag);
     let hash = sha256(&bytes);
     deserialize(&hash[..16])
 }
@@ -66,7 +66,7 @@ deterministic serialization. All values are serialized using network byte order.
 
 # Threshold scheme
 
-Given a minimum score m. A Pow p satisfies the minimum score for target t iff score(t, p) >= m.
+Given a minimum score m. A PoW p satisfies the minimum score for target t iff score(t, p) >= m.
 
 # Choosing a difficulty setting.
 
