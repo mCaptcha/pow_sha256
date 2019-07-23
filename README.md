@@ -16,7 +16,7 @@ Other small changes have also been included of various importance but mostly jus
 Prove work was done, specifically targeting a phrase.
 
 ```rust
-use PoW_SHA256::PoW;
+use pow_sha256::PoW;
 
 // Very easy difficulty
 let difficulty = u128::max_value() - u128::max_value() / 2;
