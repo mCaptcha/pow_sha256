@@ -66,6 +66,11 @@ impl<T: Serialize> PoW<T> {
         }
         return false;
     }
+
+    /// Checks if the PoW result is of sufficient difficulty
+    pub fn is_sufficient_difficulty(&self, target_diff: u128) -> bool {
+        return self.result >= target_diff;
+    }
 }
 
 fn score(prefix_sha: Sha256, nonce: u128) -> u128 {
@@ -104,6 +109,7 @@ mod test {
         assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
         assert!(pw.result >= DIFFICULTY);
         assert!(pw.is_valid_proof(&phrase));
+        assert!(pw.is_sufficient_difficulty(DIFFICULTY));
     }
 
     #[test]
@@ -113,8 +119,8 @@ mod test {
         let pwpw: PoW<PoW<String>> = PoW::prove_work(&pw, DIFFICULTY).unwrap();
         assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
         assert!(pwpw.calculate(&pw).unwrap() >= DIFFICULTY);
-        assert!(pw.result >= DIFFICULTY);
-        assert!(pwpw.result >= DIFFICULTY);
+        assert!(pw.is_sufficient_difficulty(DIFFICULTY));
+        assert!(pwpw.is_sufficient_difficulty(DIFFICULTY));
         assert!(pw.is_valid_proof(&phrase));
         assert!(pwpw.is_valid_proof(&pw));
     }
