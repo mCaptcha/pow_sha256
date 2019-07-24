@@ -5,10 +5,10 @@ use std::marker::PhantomData;
 const SALT: &str = "79ziepia7vhjgviiwjhnend3ofjqocsi2winc4ptqhmkvcajihywxcizewvckg9h6gs4j83v9";
 
 /// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
-#[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct PoW<T> {
-    pub nonce: u128,
-    pub result: u128,
+    pub nonce: u64,
+    pub result: String,
     _spook: PhantomData<T>,
 }
 
@@ -40,7 +40,7 @@ impl<T: Serialize> PoW<T> {
         }
         PoW {
             nonce: n,
-            result: result,
+            result: result.to_string(),
             _spook: PhantomData,
         }
     }
@@ -61,19 +61,21 @@ impl<T: Serialize> PoW<T> {
     /// Verifies that the PoW is indeed generated out of the phrase provided.
     pub fn is_valid_proof(&self, t: &T) -> bool {
         match self.calculate(t) {
-            Ok(res) => if self.result == res {return true;},
+            Ok(res) => return if self.result == res.to_string() {true} else {false},
             Err(_) => return false 
         }
-        return false;
     }
 
     /// Checks if the PoW result is of sufficient difficulty
     pub fn is_sufficient_difficulty(&self, target_diff: u128) -> bool {
-        return self.result >= target_diff;
+        match self.result.parse::<u128>() {
+            Ok(res) => return res >= target_diff,
+            Err(_) =>  return false
+        }
     }
 }
 
-fn score(prefix_sha: Sha256, nonce: u128) -> u128 {
+fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
     first_bytes_as_u128(
         prefix_sha
             .chain(&nonce.to_be_bytes()) // to_be_bytes() converts to network endian
@@ -107,7 +109,6 @@ mod test {
         let phrase = b"Ex nihilo nihil fit.".to_vec();
         let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
         assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
-        assert!(pw.result >= DIFFICULTY);
         assert!(pw.is_valid_proof(&phrase));
         assert!(pw.is_sufficient_difficulty(DIFFICULTY));
     }
@@ -143,7 +144,7 @@ mod test {
         let message_ser = bincode_cfg().serialize(&message).unwrap();
         let recieved_message: (u8, PoW<u8>) = bincode_cfg().deserialize(&message_ser).unwrap();
         assert_eq!(recieved_message, message);
-        assert!(message.1.calculate(&message.0).unwrap() >= DIFFICULTY);
+        assert!(message.1.is_sufficient_difficulty(DIFFICULTY));
         assert!(message.1.is_valid_proof(&target));
     }
 }

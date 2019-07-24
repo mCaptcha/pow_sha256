@@ -11,6 +11,7 @@ readme = "readme.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/robkorn/pow"
 categories = ["algorithms"] 
+
 [dependencies]
 sha2 = "0.8.0"
 serde = { version = "1.0.97", features = ["derive"] }
