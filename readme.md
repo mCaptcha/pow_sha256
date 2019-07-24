@@ -8,6 +8,8 @@ This is a fork of the [`pow` library](https://github.com/bddap/pow) by bddap wit
 
 - PoW datatype now saves the calculation result to be used for checking proof validity given input
 - `is_valid_proof` method to do the above mentioned
+- PoW datatype no longer saves `u128` values as these are unsupported by popular serialization formats (CBOR, Msgpack, ...)
+- `is_sufficient_difficulty` method to check difficulty with new changes
 
 Other small changes have also been included of various importance but mostly just stylistic/ease of use improvements.
 
@@ -40,8 +42,7 @@ let difficulty = u128::max_value() - u128::max_value() / 100_000;
 let now: u64 = get_unix_time_seconds();
 let pw = PoW::prove_work(&now, difficulty).unwrap();
 
-// Alternative way to check that the result is of sufficient difficulty
-assert!(pw.result >= difficulty);
+assert!(pw.is_sufficient_difficulty(difficulty));
 assert!(pw.is_valid_proof(&phrase))
 ```
 
@@ -86,4 +87,4 @@ fn est_average(difficulty: u128) -> u128 {
 
 # License
 
-This project is dual-licensed under `Apache License Version 2.0` & `MIT license`.
+This project is dual-licensed under `Apache License Version 2.0` or `MIT license`.
