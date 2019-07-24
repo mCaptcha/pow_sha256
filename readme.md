@@ -25,7 +25,7 @@ let phrase = b"Phrase to be used.".to_vec();
 let pw = PoW::prove_work(&phrase, difficulty).unwrap();
 
 // Asserting that the result is of sufficient difficulty
-assert!(pw.result >= difficulty);
+assert!(pw.is_sufficient_difficulty(difficulty));
 
 // Asserting that the PoW was generated from the provided phrase
 assert!(pw.is_valid_proof(&phrase))
@@ -40,6 +40,7 @@ let difficulty = u128::max_value() - u128::max_value() / 100_000;
 let now: u64 = get_unix_time_seconds();
 let pw = PoW::prove_work(&now, difficulty).unwrap();
 
+// Alternative way to check that the result is of sufficient difficulty
 assert!(pw.result >= difficulty);
 assert!(pw.is_valid_proof(&phrase))
 ```
