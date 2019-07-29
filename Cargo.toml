@@ -10,7 +10,8 @@ keywords = ["PoW", "sha256", "proof-of-work"]
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/robkorn/pow"
-categories = ["algorithms"] 
+categories = ["algorithms", "cryptography::cryptocurrencies"] 
+
 
 [dependencies]
 sha2 = "0.8.0"
