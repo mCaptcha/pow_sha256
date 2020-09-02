@@ -1,5 +1,7 @@
 # PoW_SHA256
 
+> Shuttlecraft's copy of `pow_sha256` by [robkorn](https://github.com/robkorn/pow_sha256) which is a modified version of [`pow` library](https://github.com/bddap/pow). All copyrights belong to the original authors.
+
 Rust crate which generates SHA256 Proofs of Work on serializable datatypes. 
 
 Whether for blockchain-related projects or Hashcash-like schemes, this crate can be used to prove work was done on a given serializable input. The input merely needs to implement `serde::Deserialize` to be used.
