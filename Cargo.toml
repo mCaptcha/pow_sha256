@@ -1,16 +1,16 @@
 [package]
 name = "pow_sha256"
 version = "0.1.0"
-authors = ["Robert Kornacki <robk@syre.io>, Aravinth Manivannan <realaravinth@bastsense.net>"]
+authors = [ "Aravinth Manivannan <realaravinth@bastsense.net>", "Robert Kornacki <robk@syre.io>"]
 description = """
-SHA256 PoW on any serializable datatype.
+SHA256 PoW on any serializable datatype used in mCaptcha
 """
 edition = "2018"
-keywords = ["PoW", "sha256", "proof-of-work"]
-readme = "readme.md"
+keywords = ["mCaptcha", "PoW", "sha256", "proof-of-work"]
+readme = "README.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/mcaptcha/pow_sha256"
-categories = ["algorithms", "cryptography::cryptocurrencies"] 
+categories = ["captcha", "algorithms", "cryptography::cryptocurrencies"] 
 
 
 [dependencies]

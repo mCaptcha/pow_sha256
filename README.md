@@ -1,9 +1,7 @@
-
-
 <div align="center">
-  <h1>PoW_SHA256</h1>
+  <h1>PoW-SHA256</h1>
   <p>
-    <strong>PoW_SHA256 - SHA256 based Proof-of-Work</strong>
+    <strong>PoW-SHA256 - SHA256 based Proof-of-Work</strong>
   </p>
 
 [![Documentation](https://img.shields.io/badge/docs-master-blue)](https://mcaptcha.github.io/pow_sha256/pow_sha256/index.html)
@@ -14,48 +12,51 @@
 
 </div>
 
-> pow_sha256's copy of `pow_sha256` by 
-> [robkorn](https://github.com/robkorn/pow_sha256) 
+> pow_sha256's copy of `pow_sha256` by
+> [robkorn](https://github.com/robkorn/pow_sha256)
 > which is a modified version of [`pow` library](https://github.com/bddap/pow).
 > All copyrights belong to the original authors.
 
-Rust crate which generates SHA256 Proofs of Work on serializable datatypes. 
+Rust crate which generates SHA256 Proofs of Work on serializable datatypes.
 
 Whether for blockchain-related projects or Hashcash-like schemes, this
 crate can be used to prove work was done on a given serializable input.
 The input merely needs to implement `serde::Deserialize` to be used.
 
 This is a fork of the [`pow` library](https://github.com/bddap/pow) by
-bddap with some new additions. Primary of these being:
+[@robkorn](https://github.com/robkorn/pow_sha256)) with some new
+additions. Primary of these being:
 
-- PoW datatype now saves the calculation result to be used for checking
-  proof validity given input
-- `is_valid_proof` method to do the above mentioned
-- PoW datatype no longer saves `u128` values as these are unsupported by
-  popular serialization formats (CBOR, Msgpack, ...)
-- `is_sufficient_difficulty` method to check difficulty with new changes
+- PoW datatype now offers a constructor 
+- Salt is no longer hard coded into the library, users can provide
+  unique salts.
 
 Other small changes have also been included of various importance but
 mostly just stylistic/ease of use improvements.
 
-# Examples
+## Examples
 
-Prove work was done, specifically targeting a phrase.
+Prove work specifically targeting a phrase.
 
 ```rust
-use pow_sha256::PoW;
 
-// Very easy difficulty
-let difficulty = u128::max_value() - u128::max_value() / 2;
+use pow_sha256::{ConfigBuilder, PoW};
 
-let phrase = b"Phrase to be used.".to_vec();
-let pw = PoW::prove_work(&phrase, difficulty).unwrap();
+fn main() {
+    let config = ConfigBuilder::default()
+        .salt("myrandomsaltisnotlongenoug".into())
+        .build()
+        .unwrap();
 
-// Asserting that the result is of sufficient difficulty
-assert!(pw.is_sufficient_difficulty(difficulty));
+    let phrase = "ironmansucks";
 
-// Asserting that the PoW was generated from the provided phrase
-assert!(pw.is_valid_proof(&phrase))
+    const DIFFICULTY: u128 = u128::MAX / 32;
+
+    let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
+    assert!(config.calculate(&work, &phrase).unwrap() >= DIFFICULTY);
+    assert!(config.is_valid_proof(&work, &phrase));
+    assert!(config.is_sufficient_difficulty(&work, DIFFICULTY));
+}
 ```
 
 Prove more difficult work. This time targeting a time.
@@ -63,31 +64,44 @@ Prove more difficult work. This time targeting a time.
 ```rust
 // Greater difficulty this time around. Takes around 100,000 hashes
 // to find a nonce of the correct difficulty.
-let difficulty = u128::max_value() - u128::max_value() / 100_000;
 
-let now: u64 = get_unix_time_seconds();
-let pw = PoW::prove_work(&now, difficulty).unwrap();
 
-assert!(pw.is_sufficient_difficulty(difficulty));
-assert!(pw.is_valid_proof(&phrase))
+use pow_sha256::{ConfigBuilder, PoW};
+
+fn main() {
+    let config = ConfigBuilder::default()
+        .salt("myrandomsaltisnotlongenoug".into())
+        .build()
+        .unwrap();
+
+    let phrase = "ironmansucks";
+
+    const DIFFICULTY: u128 = u128::max_value() - u128::max_value() / 100_000;
+
+    let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
+
+    assert!(config.calculate(&work, &phrase).unwrap() >= DIFFICULTY);
+    assert!(config.is_valid_proof(&work, &phrase));
+    assert!(config.is_sufficient_difficulty(&work, DIFFICULTY));
+}
+
 ```
 
+## Hashing Scheme
 
-# Hashing Scheme
-
-A randomly generated constant, `SALT`, is used as prefix to prevent PoW
-reuse from other systems such as proof of work blockchains.
+`SALT` is used as prefix to prevent PoW reuse from other systems such as
+proof of work blockchains.
 
 SHA256 is calculated over the concatenation of the:
+
 - SALT
-- Serialized Input `T` 
+- Serialized Input `T`
 - Nonce
 
 The first 16 bytes of the resulting hash are interpreted as a 128 bit
 unsigned integer and saved as the final result.
 
-
-# Choosing a difficulty setting.
+## Choosing a difficulty setting.
 
 Depending on your use case, difficulty settings often are best set
 dynamically a la bitcoin.
@@ -104,14 +118,15 @@ fn get_difficulty(average: u128) -> u128 {
 }
 ```
 
-Conversely we can use the same equation to calculate the probable number of hashes required to satisfy a given difficulty:
+Conversely we can use the same equation to calculate the probable number
+of hashes required to satisfy a given difficulty:
 
 ```rust
 fn est_average(difficulty: u128) -> u128 {
     let m = u128::max_value();
     if difficulty == m {
         return m;
-    } 
+    }
     m / (m - difficulty)
 }
 ```

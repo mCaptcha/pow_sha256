@@ -1,3 +1,26 @@
+//! MCaptch's SHA256 based Proof of Work library
+//!
+//! # Example:
+//! ```rust
+//!   use pow_sha256::{ConfigBuilder, PoW};
+//!
+//!   fn main() {
+//!       let config = ConfigBuilder::default()
+//!         .salt("myrandomsaltisnotlongenoug".into())
+//!         .build()
+//!         .unwrap();
+//!
+//!       let phrase = "ironmansucks";
+//!
+//!       const DIFFICULTY: u128 = u128::MAX / 32;
+//!
+//!       let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
+//!       assert!(config.calculate(&work, &phrase).unwrap() >= DIFFICULTY);
+//!       assert!(config.is_valid_proof(&work, &phrase));
+//!       assert!(config.is_sufficient_difficulty(&work, DIFFICULTY));
+//!   }    
+//! ```
+
 use std::marker::PhantomData;
 
 use derive_builder::Builder;
@@ -13,7 +36,10 @@ pub struct PoW<T> {
     _spook: PhantomData<T>,
 }
 
-/// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
+/// Configuration for generting proof of work
+/// Please choose a long, unique value for salt
+/// Resistance to dictionary/rainbow attacks depend on uniqueness
+/// of the salt
 #[derive(Serialize, Deserialize, Builder, PartialEq, Clone, Debug)]
 pub struct Config {
     pub salt: String,
@@ -22,8 +48,8 @@ pub struct Config {
 impl Config {
     /// Create Proof of Work over item of type T.
     ///
-    /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
-    /// on a general purpose processor.
+    /// Make sure difficulty is not too high. A 64 bit difficulty,
+    /// for example, takes a long time on a general purpose processor.
     /// Returns bincode::Error if serialization fails.
     pub fn prove_work<T>(&self, t: &T, difficulty: u128) -> bincode::Result<PoW<T>>
     where
@@ -35,8 +61,8 @@ impl Config {
     /// Create Proof of Work on an already serialized item of type T.
     /// The input is assumed to be serialized using network byte order.
     ///
-    /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
-    /// on a general purpose processor.
+    /// Make sure difficulty is not too high. A 64 bit difficulty,
+    /// for example, takes a long time on a general purpose processor.
     pub fn prove_work_serialized<T>(&self, prefix: &[u8], difficulty: u128) -> PoW<T>
     where
         T: Serialize,
