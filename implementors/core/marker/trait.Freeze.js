@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["pow_sha256"] = [{"text":"impl&lt;T&gt; Freeze for PoW&lt;T&gt;","synthetic":true,"types":[]}];
+implementors["pow_sha256"] = [{"text":"impl&lt;T&gt; Freeze for PoW&lt;T&gt;","synthetic":true,"types":[]},{"text":"impl&lt;T&gt; Freeze for PoWBuilder&lt;T&gt;","synthetic":true,"types":[]},{"text":"impl Freeze for Config","synthetic":true,"types":[]},{"text":"impl Freeze for ConfigBuilder","synthetic":true,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

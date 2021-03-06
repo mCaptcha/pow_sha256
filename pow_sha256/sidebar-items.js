@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PoW","Proof of Work over concrete type T. T can be any type that implements serde::Serialize."]]});
+initSidebarItems({"struct":[["Config","Proof of Work over concrete type T. T can be any type that implements serde::Serialize."],["ConfigBuilder","Builder for `Config`."],["PoW","Proof of Work over concrete type T. T can be any type that implements serde::Serialize."],["PoWBuilder","Builder for `PoW`."]]});
