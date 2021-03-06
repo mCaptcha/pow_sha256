@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["PoW","Proof of Work over concrete type T. T can be any type that implements serde::Serialize."]]});
