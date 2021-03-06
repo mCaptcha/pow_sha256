@@ -191,7 +191,56 @@
 <span id="188">188</span>
 <span id="189">189</span>
 <span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="doccomment">//! MCaptch&#39;s SHA256 based Proof of Work library</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Example:</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//!   use pow_sha256::{ConfigBuilder, PoW};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!   fn main() {</span>
+<span class="doccomment">//!       let config = ConfigBuilder::default()</span>
+<span class="doccomment">//!         .salt(&quot;myrandomsaltisnotlongenoug&quot;.into())</span>
+<span class="doccomment">//!         .build()</span>
+<span class="doccomment">//!         .unwrap();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!       let phrase = &quot;ironmansucks&quot;;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!       const DIFFICULTY: u128 = u128::MAX / 32;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!       let work = config.prove_work(&amp;phrase, DIFFICULTY).unwrap();</span>
+<span class="doccomment">//!       assert!(config.calculate(&amp;work, &amp;phrase).unwrap() &gt;= DIFFICULTY);</span>
+<span class="doccomment">//!       assert!(config.is_valid_proof(&amp;work, &amp;phrase));</span>
+<span class="doccomment">//!       assert!(config.is_sufficient_difficulty(&amp;work, DIFFICULTY));</span>
+<span class="doccomment">//!   }    </span>
+<span class="doccomment">//! ```</span>
+
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident">derive_builder</span>::<span class="ident">Builder</span>;
@@ -207,7 +256,10 @@
     <span class="ident">_spook</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
 }
 
-<span class="doccomment">/// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.</span>
+<span class="doccomment">/// Configuration for generting proof of work</span>
+<span class="doccomment">/// Please choose a long, unique value for salt</span>
+<span class="doccomment">/// Resistance to dictionary/rainbow attacks depend on uniqueness</span>
+<span class="doccomment">/// of the salt</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Builder</span>, <span class="ident">PartialEq</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Config</span> {
     <span class="kw">pub</span> <span class="ident">salt</span>: <span class="ident">String</span>,
@@ -216,8 +268,8 @@
 <span class="kw">impl</span> <span class="ident">Config</span> {
     <span class="doccomment">/// Create Proof of Work over item of type T.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time</span>
-    <span class="doccomment">/// on a general purpose processor.</span>
+    <span class="doccomment">/// Make sure difficulty is not too high. A 64 bit difficulty,</span>
+    <span class="doccomment">/// for example, takes a long time on a general purpose processor.</span>
     <span class="doccomment">/// Returns bincode::Error if serialization fails.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prove_work</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">t</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">difficulty</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bincode</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PoW</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
     <span class="kw">where</span>
@@ -229,8 +281,8 @@
     <span class="doccomment">/// Create Proof of Work on an already serialized item of type T.</span>
     <span class="doccomment">/// The input is assumed to be serialized using network byte order.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time</span>
-    <span class="doccomment">/// on a general purpose processor.</span>
+    <span class="doccomment">/// Make sure difficulty is not too high. A 64 bit difficulty,</span>
+    <span class="doccomment">/// for example, takes a long time on a general purpose processor.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">prove_work_serialized</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">prefix</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">difficulty</span>: <span class="ident">u128</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PoW</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">T</span>: <span class="ident">Serialize</span>,
