@@ -1,7 +1,7 @@
 [package]
 name = "pow_sha256"
-version = "0.2.1"
-authors = ["Robert Kornacki <robk@syre.io>"]
+version = "0.1.0"
+authors = ["Robert Kornacki <robk@syre.io>, Aravinth Manivannan <realaravinth@bastsense.net>"]
 description = """
 SHA256 PoW on any serializable datatype.
 """
@@ -9,7 +9,7 @@ edition = "2018"
 keywords = ["PoW", "sha256", "proof-of-work"]
 readme = "readme.md"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/robkorn/pow"
+repository = "https://github.com/mcaptcha/pow_sha256"
 categories = ["algorithms", "cryptography::cryptocurrencies"] 
 
 
