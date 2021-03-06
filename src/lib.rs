@@ -1,27 +1,35 @@
 use std::marker::PhantomData;
 
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-const SALT: &str = "79ziepia7vhjgviiwjhnend3ofjqocsi2winc4ptqhmkvcajihywxcizewvckg9h6gs4j83v9";
-
 /// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
-#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[derive(Serialize, Builder, Deserialize, PartialEq, Clone, Debug)]
 pub struct PoW<T> {
     pub nonce: u64,
     pub result: String,
+    #[builder(default = "PhantomData", setter(skip))]
     _spook: PhantomData<T>,
 }
 
-impl<T: Serialize> PoW<T> {
+/// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
+#[derive(Serialize, Deserialize, Builder, PartialEq, Clone, Debug)]
+pub struct Config {
+    pub salt: String,
+}
+
+impl Config {
     /// Create Proof of Work over item of type T.
     ///
     /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
     /// on a general purpose processor.
-    ///
     /// Returns bincode::Error if serialization fails.
-    pub fn prove_work(t: &T, difficulty: u128) -> bincode::Result<PoW<T>> {
-        bincode::serialize(t).map(|v| Self::prove_work_serialized(&v, difficulty))
+    pub fn prove_work<T>(&self, t: &T, difficulty: u128) -> bincode::Result<PoW<T>>
+    where
+        T: Serialize,
+    {
+        bincode::serialize(t).map(|v| self.prove_work_serialized(&v, difficulty))
     }
 
     /// Create Proof of Work on an already serialized item of type T.
@@ -29,8 +37,11 @@ impl<T: Serialize> PoW<T> {
     ///
     /// Make sure difficulty is not too high. A 64 bit difficulty, for example, takes a long time
     /// on a general purpose processor.
-    pub fn prove_work_serialized(prefix: &[u8], difficulty: u128) -> PoW<T> {
-        let prefix_sha = Sha256::new().chain(SALT).chain(prefix);
+    pub fn prove_work_serialized<T>(&self, prefix: &[u8], difficulty: u128) -> PoW<T>
+    where
+        T: Serialize,
+    {
+        let prefix_sha = Sha256::new().chain(&self.salt).chain(prefix);
         let mut n = 0;
         let mut result = 0;
         while result < difficulty {
@@ -45,21 +56,30 @@ impl<T: Serialize> PoW<T> {
     }
 
     /// Calculate the PoW score with the provided input T.
-    pub fn calculate(&self, t: &T) -> bincode::Result<u128> {
-        bincode::serialize(t).map(|v| self.calculate_serialized(&v))
+    pub fn calculate<T>(&self, pow: &PoW<T>, t: &T) -> bincode::Result<u128>
+    where
+        T: Serialize,
+    {
+        bincode::serialize(t).map(|v| self.calculate_serialized(pow, &v))
     }
 
     /// Calculate the PoW score of an already serialized T and self.
     /// The input is assumed to be serialized using network byte order.
-    pub fn calculate_serialized(&self, target: &[u8]) -> u128 {
-        score(Sha256::new().chain(SALT).chain(target), self.nonce)
+    pub fn calculate_serialized<T>(&self, pow: &PoW<T>, target: &[u8]) -> u128
+    where
+        T: Serialize,
+    {
+        score(Sha256::new().chain(&self.salt).chain(target), pow.nonce)
     }
 
     /// Verifies that the PoW is indeed generated out of the phrase provided.
-    pub fn is_valid_proof(&self, t: &T) -> bool {
-        match self.calculate(t) {
+    pub fn is_valid_proof<T>(&self, pow: &PoW<T>, t: &T) -> bool
+    where
+        T: Serialize,
+    {
+        match self.calculate(pow, t) {
             Ok(res) => {
-                return if self.result == res.to_string() {
+                return if pow.result == res.to_string() {
                     true
                 } else {
                     false
@@ -70,8 +90,11 @@ impl<T: Serialize> PoW<T> {
     }
 
     /// Checks if the PoW result is of sufficient difficulty
-    pub fn is_sufficient_difficulty(&self, target_diff: u128) -> bool {
-        match self.result.parse::<u128>() {
+    pub fn is_sufficient_difficulty<T>(&self, pow: &PoW<T>, target_diff: u128) -> bool
+    where
+        T: Serialize,
+    {
+        match pow.result.parse::<u128>() {
             Ok(res) => return res >= target_diff,
             Err(_) => return false,
         }
@@ -94,59 +117,74 @@ fn first_bytes_as_u128(inp: &[u8]) -> u128 {
     bincode::deserialize(&inp).unwrap()
 }
 
-//fn bincode_cfg() -> bincode::Config {
-//    let mut cfg = bincode::config();
-//    cfg.big_endian();
-//    cfg
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     const DIFFICULTY: u128 = 0xff000000000000000000000000000000;
 
+    fn get_config() -> Config {
+        ConfigBuilder::default()
+            .salt(
+                "79ziepia7vhjgviiwjhnend3ofjqocsi2winc4ptqhmkvcajihywxcizewvckg9h6gs4j83v9".into(),
+            )
+            .build()
+            .unwrap()
+    }
+
     #[test]
     fn base_functionality() {
         // Let's prove we did work targeting a phrase.
         let phrase = b"Ex nihilo nihil fit.".to_vec();
-        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
-        assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
-        assert!(pw.is_valid_proof(&phrase));
-        assert!(pw.is_sufficient_difficulty(DIFFICULTY));
+        let config = get_config();
+        let pw = config.prove_work(&phrase, DIFFICULTY).unwrap();
+        assert!(config.calculate(&pw, &phrase).unwrap() >= DIFFICULTY);
+        assert!(config.is_valid_proof(&pw, &phrase));
+        assert!(config.is_sufficient_difficulty(&pw, DIFFICULTY));
     }
 
     #[test]
     fn double_pow() {
         let phrase = "Ex nihilo nihil fit.".to_owned();
-        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
-        let pwpw: PoW<PoW<String>> = PoW::prove_work(&pw, DIFFICULTY).unwrap();
-        assert!(pw.calculate(&phrase).unwrap() >= DIFFICULTY);
-        assert!(pwpw.calculate(&pw).unwrap() >= DIFFICULTY);
-        assert!(pw.is_sufficient_difficulty(DIFFICULTY));
-        assert!(pwpw.is_sufficient_difficulty(DIFFICULTY));
-        assert!(pw.is_valid_proof(&phrase));
-        assert!(pwpw.is_valid_proof(&pw));
+        let config = get_config();
+
+        let pw = config.prove_work(&phrase, DIFFICULTY).unwrap();
+        let pwpw = config.prove_work(&pw, DIFFICULTY).unwrap();
+
+        assert!(config.calculate(&pw, &phrase).unwrap() >= DIFFICULTY);
+        assert!(config.is_valid_proof(&pw, &phrase));
+        assert!(config.is_sufficient_difficulty(&pw, DIFFICULTY));
+
+        assert!(config.calculate(&pwpw, &pw).unwrap() >= DIFFICULTY);
+        assert!(config.is_valid_proof(&pwpw, &pw));
+        assert!(config.is_sufficient_difficulty(&pwpw, DIFFICULTY));
     }
 
     #[test]
     fn is_not_valid_proof() {
         let phrase = "Ex nihilo nihil fit.".to_owned();
         let phrase2 = "Omne quod movetur ab alio movetur.".to_owned();
-        let pw = PoW::prove_work(&phrase, DIFFICULTY).unwrap();
-        let pw2 = PoW::prove_work(&phrase2, DIFFICULTY).unwrap();
-        assert!(!pw.is_valid_proof(&phrase2));
-        assert!(!pw2.is_valid_proof(&phrase));
+
+        let config = get_config();
+        let pw = config.prove_work(&phrase, DIFFICULTY).unwrap();
+
+        let pw2 = config.prove_work(&phrase2, DIFFICULTY).unwrap();
+
+        assert!(!config.is_valid_proof(&pw, &phrase2));
+        assert!(!config.is_valid_proof(&pw2, &phrase));
     }
 
     #[test]
     fn serialization_test() {
         let target: u8 = 1;
-        let pw = PoW::prove_work(&target, DIFFICULTY).unwrap();
+        let config = get_config();
+        let pw = config.prove_work(&target, DIFFICULTY).unwrap();
+
         let message: (u8, PoW<u8>) = (target, pw);
         let message_ser = bincode::serialize(&message).unwrap();
         let recieved_message: (u8, PoW<u8>) = bincode::deserialize(&message_ser).unwrap();
         assert_eq!(recieved_message, message);
-        assert!(message.1.is_sufficient_difficulty(DIFFICULTY));
-        assert!(message.1.is_valid_proof(&target));
+        assert!(config.is_sufficient_difficulty(&message.1, DIFFICULTY));
+        assert!(config.is_valid_proof(&message.1, &target));
     }
 }
