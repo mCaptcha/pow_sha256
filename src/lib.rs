@@ -1,6 +1,7 @@
-use serde::{Deserialize, Serialize};
-use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::marker::PhantomData;
+
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 const SALT: &str = "79ziepia7vhjgviiwjhnend3ofjqocsi2winc4ptqhmkvcajihywxcizewvckg9h6gs4j83v9";
 
@@ -20,9 +21,7 @@ impl<T: Serialize> PoW<T> {
     ///
     /// Returns bincode::Error if serialization fails.
     pub fn prove_work(t: &T, difficulty: u128) -> bincode::Result<PoW<T>> {
-        bincode_cfg()
-            .serialize(t)
-            .map(|v| Self::prove_work_serialized(&v, difficulty))
+        bincode::serialize(t).map(|v| Self::prove_work_serialized(&v, difficulty))
     }
 
     /// Create Proof of Work on an already serialized item of type T.
@@ -47,9 +46,7 @@ impl<T: Serialize> PoW<T> {
 
     /// Calculate the PoW score with the provided input T.
     pub fn calculate(&self, t: &T) -> bincode::Result<u128> {
-        bincode_cfg()
-            .serialize(t)
-            .map(|v| self.calculate_serialized(&v))
+        bincode::serialize(t).map(|v| self.calculate_serialized(&v))
     }
 
     /// Calculate the PoW score of an already serialized T and self.
@@ -61,8 +58,14 @@ impl<T: Serialize> PoW<T> {
     /// Verifies that the PoW is indeed generated out of the phrase provided.
     pub fn is_valid_proof(&self, t: &T) -> bool {
         match self.calculate(t) {
-            Ok(res) => return if self.result == res.to_string() {true} else {false},
-            Err(_) => return false 
+            Ok(res) => {
+                return if self.result == res.to_string() {
+                    true
+                } else {
+                    false
+                }
+            }
+            Err(_) => return false,
         }
     }
 
@@ -70,7 +73,7 @@ impl<T: Serialize> PoW<T> {
     pub fn is_sufficient_difficulty(&self, target_diff: u128) -> bool {
         match self.result.parse::<u128>() {
             Ok(res) => return res >= target_diff,
-            Err(_) =>  return false
+            Err(_) => return false,
         }
     }
 }
@@ -79,7 +82,7 @@ fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
     first_bytes_as_u128(
         prefix_sha
             .chain(&nonce.to_be_bytes()) // to_be_bytes() converts to network endian
-            .fixed_result()
+            .finalize()
             .as_slice(),
     )
 }
@@ -88,14 +91,13 @@ fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
 ///
 /// panics if inp.len() < 16
 fn first_bytes_as_u128(inp: &[u8]) -> u128 {
-    bincode_cfg().deserialize(&inp).unwrap()
+    bincode::deserialize(&inp).unwrap()
 }
 
-fn bincode_cfg() -> bincode::Config {
-    let mut cfg = bincode::config();
-    cfg.big_endian();
-    cfg
-}
+//fn bincode_cfg() -> bincode::Config {
+//    let mut cfg = bincode::config();
+//    cfg.big_endian();
+//    cfg
 
 #[cfg(test)]
 mod test {
@@ -141,8 +143,8 @@ mod test {
         let target: u8 = 1;
         let pw = PoW::prove_work(&target, DIFFICULTY).unwrap();
         let message: (u8, PoW<u8>) = (target, pw);
-        let message_ser = bincode_cfg().serialize(&message).unwrap();
-        let recieved_message: (u8, PoW<u8>) = bincode_cfg().deserialize(&message_ser).unwrap();
+        let message_ser = bincode::serialize(&message).unwrap();
+        let recieved_message: (u8, PoW<u8>) = bincode::deserialize(&message_ser).unwrap();
         assert_eq!(recieved_message, message);
         assert!(message.1.is_sufficient_difficulty(DIFFICULTY));
         assert!(message.1.is_valid_proof(&target));
