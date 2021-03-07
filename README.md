@@ -5,10 +5,10 @@
   </p>
 
 [![Documentation](https://img.shields.io/badge/docs-master-blue)](https://mcaptcha.github.io/pow_sha256/pow_sha256/index.html)
-![CI (Linux)](<https://github.com/mcaptcha/pow_sha256/workflows/CI%20(Linux)/badge.svg>)
-[![dependency status](https://deps.rs/repo/github/mcaptcha/pow_sha256/status.svg)](https://deps.rs/repo/github/mcaptcha/pow_sha256)
+![CI (Linux)](<https://github.com/mCaptcha/pow_sha256/workflows/CI%20(Linux)/badge.svg>)
+[![dependency status](https://deps.rs/repo/github/mCaptcha/pow_sha256/status.svg)](https://deps.rs/repo/github/mCaptcha/pow_sha256)
 <br />
-[![codecov](https://codecov.io/gh/mcaptcha/pow_sha256/branch/master/graph/badge.svg)](https://codecov.io/gh/mcaptcha/pow_sha256)
+[![codecov](https://codecov.io/gh/mCaptcha/pow_sha256/branch/master/graph/badge.svg)](https://codecov.io/gh/mCaptcha/pow_sha256)
 
 </div>
 
