@@ -12,10 +12,9 @@ fn main() {
 
     let phrase = "ironmansucks";
 
-    const DIFFICULTY: u128 = u128::MAX / 32;
+    const DIFFICULTY: u32 = 1000;
 
     let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
-    assert!(config.calculate(&work, &phrase).unwrap() >= DIFFICULTY);
     assert!(config.is_valid_proof(&work, &phrase));
     assert!(config.is_sufficient_difficulty(&work, DIFFICULTY));
 }

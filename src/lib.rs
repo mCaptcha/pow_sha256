@@ -12,10 +12,9 @@
 //!
 //!       let phrase = "ironmansucks";
 //!
-//!       const DIFFICULTY: u128 = u128::MAX / 32;
+//!       const DIFFICULTY: u32 = 1000;
 //!
 //!       let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
-//!       assert!(config.calculate(&work, &phrase).unwrap() >= DIFFICULTY);
 //!       assert!(config.is_valid_proof(&work, &phrase));
 //!       assert!(config.is_sufficient_difficulty(&work, DIFFICULTY));
 //!   }    
@@ -51,7 +50,7 @@ impl Config {
     /// Make sure difficulty is not too high. A 64 bit difficulty,
     /// for example, takes a long time on a general purpose processor.
     /// Returns bincode::Error if serialization fails.
-    pub fn prove_work<T>(&self, t: &T, difficulty: u128) -> bincode::Result<PoW<T>>
+    pub fn prove_work<T>(&self, t: &T, difficulty: u32) -> bincode::Result<PoW<T>>
     where
         T: Serialize,
     {
@@ -63,14 +62,14 @@ impl Config {
     ///
     /// Make sure difficulty is not too high. A 64 bit difficulty,
     /// for example, takes a long time on a general purpose processor.
-    pub fn prove_work_serialized<T>(&self, prefix: &[u8], difficulty: u128) -> PoW<T>
+    pub fn prove_work_serialized<T>(&self, prefix: &[u8], difficulty: u32) -> PoW<T>
     where
         T: Serialize,
     {
         let prefix_sha = Sha256::new().chain(&self.salt).chain(prefix);
         let mut n = 0;
         let mut result = 0;
-        while result < difficulty {
+        while result < get_difficulty(difficulty) {
             n += 1;
             result = score(prefix_sha.clone(), n);
         }
@@ -116,12 +115,12 @@ impl Config {
     }
 
     /// Checks if the PoW result is of sufficient difficulty
-    pub fn is_sufficient_difficulty<T>(&self, pow: &PoW<T>, target_diff: u128) -> bool
+    pub fn is_sufficient_difficulty<T>(&self, pow: &PoW<T>, target_diff: u32) -> bool
     where
         T: Serialize,
     {
         match pow.result.parse::<u128>() {
-            Ok(res) => return res >= target_diff,
+            Ok(res) => return res >= get_difficulty(target_diff),
             Err(_) => return false,
         }
     }
@@ -143,11 +142,17 @@ fn first_bytes_as_u128(inp: &[u8]) -> u128 {
     bincode::deserialize(&inp).unwrap()
 }
 
+// utility function to get u128 difficulty factor from u32
+// javacript isn't capable of represnting u128 so
+fn get_difficulty(difficulty_factor: u32) -> u128 {
+    u128::max_value() - u128::max_value() / difficulty_factor as u128
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
-    const DIFFICULTY: u128 = 0xff000000000000000000000000000000;
+    const DIFFICULTY: u32 = 1000;
 
     fn get_config() -> Config {
         ConfigBuilder::default()
@@ -164,7 +169,7 @@ mod test {
         let phrase = b"Ex nihilo nihil fit.".to_vec();
         let config = get_config();
         let pw = config.prove_work(&phrase, DIFFICULTY).unwrap();
-        assert!(config.calculate(&pw, &phrase).unwrap() >= DIFFICULTY);
+        assert!(config.calculate(&pw, &phrase).unwrap() >= get_difficulty(DIFFICULTY));
         assert!(config.is_valid_proof(&pw, &phrase));
         assert!(config.is_sufficient_difficulty(&pw, DIFFICULTY));
     }
@@ -177,11 +182,11 @@ mod test {
         let pw = config.prove_work(&phrase, DIFFICULTY).unwrap();
         let pwpw = config.prove_work(&pw, DIFFICULTY).unwrap();
 
-        assert!(config.calculate(&pw, &phrase).unwrap() >= DIFFICULTY);
+        assert!(config.calculate(&pw, &phrase).unwrap() >= get_difficulty(DIFFICULTY));
         assert!(config.is_valid_proof(&pw, &phrase));
         assert!(config.is_sufficient_difficulty(&pw, DIFFICULTY));
 
-        assert!(config.calculate(&pwpw, &pw).unwrap() >= DIFFICULTY);
+        assert!(config.calculate(&pwpw, &pw).unwrap() >= get_difficulty(DIFFICULTY));
         assert!(config.is_valid_proof(&pwpw, &pw));
         assert!(config.is_sufficient_difficulty(&pwpw, DIFFICULTY));
     }

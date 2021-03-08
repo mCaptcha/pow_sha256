@@ -1,6 +1,6 @@
 [package]
 name = "pow_sha256"
-version = "0.1.0"
+version = "0.1.1"
 authors = [ "Aravinth Manivannan <realaravinth@bastsense.net>", "Robert Kornacki <robk@syre.io>"]
 description = """
 SHA256 PoW on any serializable datatype used in mCaptcha

@@ -27,7 +27,7 @@ This is a fork of the [`pow` library](https://github.com/bddap/pow) by
 [@robkorn](https://github.com/robkorn/pow_sha256)) with some new
 additions. Primary of these being:
 
-- PoW datatype now offers a constructor 
+- PoW datatype now offers a constructor
 - Salt is no longer hard coded into the library, users can provide
   unique salts.
 
@@ -50,7 +50,7 @@ fn main() {
 
     let phrase = "ironmansucks";
 
-    const DIFFICULTY: u128 = u128::MAX / 32;
+    const DIFFICULTY: u32 = 1000;
 
     let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
     assert!(config.calculate(&work, &phrase).unwrap() >= DIFFICULTY);
@@ -76,7 +76,7 @@ fn main() {
 
     let phrase = "ironmansucks";
 
-    const DIFFICULTY: u128 = u128::max_value() - u128::max_value() / 100_000;
+    const DIFFICULTY: u32 = 100_000;
 
     let work = config.prove_work(&phrase, DIFFICULTY).unwrap();
 
@@ -131,6 +131,10 @@ fn est_average(difficulty: u128) -> u128 {
 }
 ```
 
-# License
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md)
+
+## License
 
 This project is dual-licensed under `Apache License Version 2.0` or `MIT license`.
