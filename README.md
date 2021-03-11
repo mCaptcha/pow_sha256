@@ -5,6 +5,7 @@
   </p>
 
 [![Documentation](https://img.shields.io/badge/docs-master-blue)](https://mcaptcha.github.io/pow_sha256/pow_sha256/index.html)
+[![Documentation](https://img.shields.io/badge/docs-0.2.0-yellow)](https://mcaptcha.org/docs/api/pow-sha256)
 ![CI (Linux)](<https://github.com/mCaptcha/pow_sha256/workflows/CI%20(Linux)/badge.svg>)
 [![dependency status](https://deps.rs/repo/github/mCaptcha/pow_sha256/status.svg)](https://deps.rs/repo/github/mCaptcha/pow_sha256)
 <br />
@@ -33,6 +34,11 @@ additions. Primary of these being:
 
 Other small changes have also been included of various importance but
 mostly just stylistic/ease of use improvements.
+
+## Documentation
+
+- [master-branch](https://mcaptcha.github.io/pow_sha256/pow_sha256/index.html)
+- [All published versions](https://mcaptcha.org/docs/api/pow-sha256)
 
 ## Examples
 
