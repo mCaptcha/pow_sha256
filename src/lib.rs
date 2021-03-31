@@ -69,7 +69,8 @@ impl Config {
         let prefix_sha = Sha256::new().chain(&self.salt).chain(prefix);
         let mut n = 0;
         let mut result = 0;
-        while result < get_difficulty(difficulty) {
+        let difficulty = get_difficulty(difficulty);
+        while result < difficulty {
             n += 1;
             result = score(prefix_sha.clone(), n);
         }
