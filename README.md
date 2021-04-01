@@ -5,13 +5,16 @@
   </p>
 
 [![Documentation](https://img.shields.io/badge/docs-master-blue)](https://mcaptcha.github.io/pow_sha256/pow_sha256/index.html)
-[![Documentation](https://img.shields.io/badge/docs-0.2.0-yellow)](https://mcaptcha.org/docs/api/pow-sha256)
+[![Documentation](https://img.shields.io/badge/docs-0.2.1-yellow)](https://mcaptcha.org/docs/api/pow-sha256)
 ![CI (Linux)](<https://github.com/mCaptcha/pow_sha256/workflows/CI%20(Linux)/badge.svg>)
 [![dependency status](https://deps.rs/repo/github/mCaptcha/pow_sha256/status.svg)](https://deps.rs/repo/github/mCaptcha/pow_sha256)
 <br />
 [![codecov](https://codecov.io/gh/mCaptcha/pow_sha256/branch/master/graph/badge.svg)](https://codecov.io/gh/mCaptcha/pow_sha256)
 
 </div>
+
+**NOTE: All versions prior to 0.2.1 produce broken PoWs, upgrade to
+latest version**
 
 > pow_sha256's copy of `pow_sha256` by
 > [robkorn](https://github.com/robkorn/pow_sha256)
