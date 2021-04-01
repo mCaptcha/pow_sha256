@@ -140,7 +140,14 @@ fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
 ///
 /// panics if inp.len() < 16
 fn first_bytes_as_u128(inp: &[u8]) -> u128 {
-    bincode::deserialize(&inp).unwrap()
+    use bincode::config::*;
+    DefaultOptions::new()
+        .with_fixint_encoding()
+        .allow_trailing_bytes()
+        .with_no_limit()
+        .with_big_endian()
+        .deserialize(&inp)
+        .unwrap()
 }
 
 // utility function to get u128 difficulty factor from u32
