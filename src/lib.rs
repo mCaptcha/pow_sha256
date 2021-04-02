@@ -213,6 +213,31 @@ mod test {
         assert!(!config.is_valid_proof(&pw2, &phrase));
     }
 
+    fn check_time(prev: u128, current: u128) -> bool {
+        if prev < current {
+            true
+        } else {
+            false
+        }
+    }
+
+    #[test]
+    fn computation_time_test() {
+        use std::time::Instant;
+        const DIFFICULTY: u32 = 50000;
+
+        let target = "testing";
+        let config = get_config();
+        let mut current = Instant::now();
+        config.prove_work(&target, DIFFICULTY).unwrap();
+        let prev = current.elapsed().as_nanos();
+
+        current = Instant::now();
+        config.prove_work(&target, DIFFICULTY * 10).unwrap();
+        let tmp = current.elapsed().as_nanos();
+        assert!(check_time(prev, tmp));
+    }
+
     #[test]
     fn serialization_test() {
         let target: u8 = 1;
