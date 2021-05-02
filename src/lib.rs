@@ -23,6 +23,7 @@
 use std::marker::PhantomData;
 
 use derive_builder::Builder;
+use num::Num;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
