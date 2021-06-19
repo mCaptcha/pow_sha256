@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["pow_sha256"];
