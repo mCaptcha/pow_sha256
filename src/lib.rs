@@ -23,7 +23,7 @@
 use std::marker::PhantomData;
 
 use derive_builder::Builder;
-use num::Num;
+//use num::Num;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -73,7 +73,7 @@ impl Config {
         let difficulty = get_difficulty(difficulty);
         while result < difficulty {
             n += 1;
-            result = score(prefix_sha.clone(), n);
+            result = dev::score(prefix_sha.clone(), n);
         }
         PoW {
             nonce: n,
@@ -96,7 +96,7 @@ impl Config {
     where
         T: Serialize,
     {
-        score(Sha256::new().chain(&self.salt).chain(target), pow.nonce)
+        dev::score(Sha256::new().chain(&self.salt).chain(target), pow.nonce)
     }
 
     /// Verifies that the PoW is indeed generated out of the phrase provided.
@@ -128,27 +128,32 @@ impl Config {
     }
 }
 
-fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
-    first_bytes_as_u128(
-        prefix_sha
-            .chain(&nonce.to_be_bytes()) // to_be_bytes() converts to network endian
-            .finalize()
-            .as_slice(),
-    )
-}
+pub mod dev {
+    use super::*;
 
-/// # Panics
-///
-/// panics if inp.len() < 16
-fn first_bytes_as_u128(inp: &[u8]) -> u128 {
-    use bincode::config::*;
-    DefaultOptions::new()
-        .with_fixint_encoding()
-        .allow_trailing_bytes()
-        .with_no_limit()
-        .with_big_endian()
-        .deserialize(&inp)
-        .unwrap()
+    pub fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
+        first_bytes_as_u128(
+            prefix_sha
+                .chain(&nonce.to_string()) //used to be: to_be_bytes() converts to network endian
+                // chain() expexets something that can be converted to &[u8], String is fine
+                .finalize()
+                .as_slice(),
+        )
+    }
+
+    /// # Panics
+    ///
+    /// panics if inp.len() < 16
+    fn first_bytes_as_u128(inp: &[u8]) -> u128 {
+        use bincode::config::*;
+        DefaultOptions::new()
+            .with_fixint_encoding()
+            .allow_trailing_bytes()
+            .with_no_limit()
+            .with_big_endian()
+            .deserialize(&inp)
+            .unwrap()
+    }
 }
 
 // utility function to get u128 difficulty factor from u32
