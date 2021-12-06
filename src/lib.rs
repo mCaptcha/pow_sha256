@@ -83,7 +83,7 @@ impl Config {
     }
 
     /// Calculate the PoW score with the provided input T.
-    pub fn calculate<T>(&self, pow: &PoW<T>, t: &T) -> bincode::Result<u128>
+    pub fn calculate<T>(&self, pow: &PoW<T>, t: &T) -> bincode::Result<u64>
     where
         T: Serialize,
     {
@@ -92,7 +92,7 @@ impl Config {
 
     /// Calculate the PoW score of an already serialized T and self.
     /// The input is assumed to be serialized using network byte order.
-    pub fn calculate_serialized<T>(&self, pow: &PoW<T>, target: &[u8]) -> u128
+    pub fn calculate_serialized<T>(&self, pow: &PoW<T>, target: &[u8]) -> u64
     where
         T: Serialize,
     {
@@ -121,7 +121,7 @@ impl Config {
     where
         T: Serialize,
     {
-        match pow.result.parse::<u128>() {
+        match pow.result.parse::<u64>() {
             Ok(res) => return res >= get_difficulty(target_diff),
             Err(_) => return false,
         }
@@ -131,7 +131,7 @@ impl Config {
 pub mod dev {
     use super::*;
 
-    pub fn score(prefix_sha: Sha256, nonce: u64) -> u128 {
+    pub fn score(prefix_sha: Sha256, nonce: u64) -> u64 {
         first_bytes_as_u128(
             prefix_sha
                 .chain(&nonce.to_string()) //used to be: to_be_bytes() converts to network endian
@@ -144,7 +144,7 @@ pub mod dev {
     /// # Panics
     ///
     /// panics if inp.len() < 16
-    fn first_bytes_as_u128(inp: &[u8]) -> u128 {
+    fn first_bytes_as_u128(inp: &[u8]) -> u64 {
         use bincode::config::*;
         DefaultOptions::new()
             .with_fixint_encoding()
@@ -158,8 +158,8 @@ pub mod dev {
 
 // utility function to get u128 difficulty factor from u32
 // javacript isn't capable of represnting u128 so
-fn get_difficulty(difficulty_factor: u32) -> u128 {
-    u128::max_value() - u128::max_value() / difficulty_factor as u128
+fn get_difficulty(difficulty_factor: u32) -> u64 {
+    u64::max_value() - u64::max_value() / difficulty_factor as u64
 }
 
 #[cfg(test)]
