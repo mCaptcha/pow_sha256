@@ -13,7 +13,7 @@
 
 </div>
 
-**NOTE: All versions prior to 0.2.1 produce broken PoWs, upgrade to
+**NOTE: All versions prior to 0.3.1 produce broken PoWs, upgrade to
 latest version**
 
 > pow_sha256's copy of `pow_sha256` by
