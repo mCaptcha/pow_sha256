@@ -1,3 +1,4 @@
-var sourcesIndex = {};
-sourcesIndex["pow_sha256"] = {"name":"","files":["lib.rs"]};
+var sourcesIndex = JSON.parse('{\
+"pow_sha256":["",[],["lib.rs"]]\
+}');
 createSourceSidebar();
