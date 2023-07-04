@@ -25,7 +25,7 @@ use std::marker::PhantomData;
 use derive_builder::Builder;
 //use num::Num;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, digest::Update, Sha256};
+use sha2::{digest::Update, Digest, Sha256};
 
 /// Proof of Work over concrete type T. T can be any type that implements serde::Serialize.
 #[derive(Serialize, Builder, Deserialize, PartialEq, Clone, Debug)]
