@@ -45,7 +45,74 @@ pub struct Config {
     pub salt: String,
 }
 
+pub enum SteppedSolve<T> {
+    Intermediate(u128, u64, Sha256, u128),
+    Work(PoW<T>),
+}
+
 impl Config {
+    pub fn stepped_prove_work<T>(
+        &self,
+        t: &T,
+        difficulty: u32,
+        step: usize,
+        inter: Option<SteppedSolve<T>>,
+    ) -> bincode::Result<SteppedSolve<T>>
+    where
+        T: Serialize,
+    {
+        bincode::serialize(t)
+            .map(|v| self.stepped_prove_work_serialized(&v, difficulty, step, inter))
+    }
+
+    /// Create Proof of Work on an already serialized item of type T.
+    /// The input is assumed to be serialized using network byte order.
+    ///
+    /// Make sure difficulty is not too high. A 64 bit difficulty,
+    /// for example, takes a long time on a general purpose processor.
+    pub fn stepped_prove_work_serialized<T>(
+        &self,
+        prefix: &[u8],
+        difficulty: u32,
+        step: usize,
+        inter: Option<SteppedSolve<T>>,
+    ) -> SteppedSolve<T>
+    where
+        T: Serialize,
+    {
+        let (mut result, mut n, prefix_sha, difficulty) = match inter {
+            Some(SteppedSolve::Intermediate(result, nonce, prefix, difficulty)) => {
+                (result, nonce, prefix, difficulty)
+            }
+            _ => {
+                let prefix_sha = Sha256::new().chain(&self.salt).chain(prefix);
+                let n = 0;
+                let result = 0;
+                let difficulty = get_difficulty(difficulty);
+                (result, n, prefix_sha, difficulty)
+            }
+        };
+        let mut count = 0;
+        //     let prefix_sha = Sha256::new().chain(&self.salt).chain(prefix);
+        //     let mut n = 0;
+        //     let mut result = 0;
+        //     let difficulty = get_difficulty(difficulty);
+        while result < difficulty {
+            if count > step {
+                return SteppedSolve::Intermediate(result, n, prefix_sha, difficulty);
+            } else {
+                count += 1;
+            }
+            n += 1;
+            result = dev::score(prefix_sha.clone(), n);
+        }
+        SteppedSolve::Work(PoW {
+            nonce: n,
+            result: result.to_string(),
+            _spook: PhantomData,
+        })
+    }
+
     /// Create Proof of Work over item of type T.
     ///
     /// Make sure difficulty is not too high. A 64 bit difficulty,
@@ -256,5 +323,31 @@ mod test {
         assert_eq!(recieved_message, message);
         assert!(config.is_sufficient_difficulty(&message.1, DIFFICULTY));
         assert!(config.is_valid_proof(&message.1, &target));
+    }
+
+    #[test]
+    fn stepped_solve() {
+        let phrase = "Ex nihilo nihil fit.".to_owned();
+        let config = get_config();
+
+        let mut inter = None;
+        loop {
+            match config.stepped_prove_work(&phrase, 50000, 1000, inter) {
+                Ok(SteppedSolve::Intermediate(result, nonce, prefix, difficulty)) => {
+                    println!("Current nonce {nonce}");
+                    inter = Some(SteppedSolve::Intermediate(
+                        result, nonce, prefix, difficulty,
+                    ));
+                    continue;
+                }
+
+                Ok(SteppedSolve::Work(w)) => {
+                    assert!(config.is_valid_proof(&w, &phrase));
+                    assert!(config.is_sufficient_difficulty(&w, DIFFICULTY));
+                    break;
+                }
+                Err(e) => panic!("{}", e),
+            };
+        }
     }
 }
