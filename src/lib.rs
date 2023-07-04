@@ -45,7 +45,94 @@ pub struct Config {
     pub salt: String,
 }
 
+/// Return value of incremental prooving. When proof  is ready, IncrementalSolve::Work is returned
+/// and when proof is not ready, IncrementalSolve::Intermediate is returned
+#[cfg(feature = "incremental")]
+pub enum IncrementalSolve<T> {
+    /// Intermediate result
+    Intermediate(u128, u64, Sha256, u128),
+    /// Final result
+    Work(PoW<T>),
+}
+
 impl Config {
+    ///
+    /// step is used to control the number of cycles after which the function should exit, even
+    /// when the proof isn't ready
+    /// inter is used to keep track of state and complete proof generation. Set inter to None
+    /// during first cyle and pass the returned value of the previous cycle to continue proof
+    /// generation
+
+    #[cfg(feature = "incremental")]
+    pub fn stepped_prove_work<T>(
+        &self,
+        t: &T,
+        difficulty: u32,
+        step: usize,
+        inter: Option<IncrementalSolve<T>>,
+    ) -> bincode::Result<IncrementalSolve<T>>
+    where
+        T: Serialize,
+    {
+        bincode::serialize(t)
+            .map(|v| self.stepped_prove_work_serialized(&v, difficulty, step, inter))
+    }
+
+    #[cfg(feature = "incremental")]
+    /// Create Proof of Work over item of type T.
+    ///
+    /// Make sure difficulty is not too high. A 64 bit difficulty,
+    /// for example, takes a long time on a general purpose processor.
+    /// The input is assumed to be serialized using network byte order.
+    ///
+    /// Make sure difficulty is not too high. A 64 bit difficulty,
+    /// for example, takes a long time on a general purpose processor.
+    /// step is used to control the number of cycles after which the function should exit, even
+    /// when the proof isn't ready
+    /// inter is used to keep track of state and complete proof generation. Set inter to None
+    /// during first cyle and pass the returned value of the previous cycle to continue proof
+    /// generation
+    /// Returns bincode::Error if serialization fails.
+    /// Create Proof of Work on an already serialized item of type T.
+    fn stepped_prove_work_serialized<T>(
+        &self,
+        prefix: &[u8],
+        difficulty: u32,
+        step: usize,
+        inter: Option<IncrementalSolve<T>>,
+    ) -> IncrementalSolve<T>
+    where
+        T: Serialize,
+    {
+        let (mut result, mut n, prefix_sha, difficulty) = match inter {
+            Some(IncrementalSolve::Intermediate(result, nonce, prefix, difficulty)) => {
+                (result, nonce, prefix, difficulty)
+            }
+            _ => {
+                let prefix_sha = Sha256::new().chain(&self.salt).chain(prefix);
+                let n = 0;
+                let result = 0;
+                let difficulty = get_difficulty(difficulty);
+                (result, n, prefix_sha, difficulty)
+            }
+        };
+        let mut count = 0;
+        while result < difficulty {
+            if count > step {
+                return IncrementalSolve::Intermediate(result, n, prefix_sha, difficulty);
+            } else {
+                count += 1;
+            }
+            n += 1;
+            result = dev::score(prefix_sha.clone(), n);
+        }
+        IncrementalSolve::Work(PoW {
+            nonce: n,
+            result: result.to_string(),
+            _spook: PhantomData,
+        })
+    }
+
     /// Create Proof of Work over item of type T.
     ///
     /// Make sure difficulty is not too high. A 64 bit difficulty,
@@ -256,5 +343,32 @@ mod test {
         assert_eq!(recieved_message, message);
         assert!(config.is_sufficient_difficulty(&message.1, DIFFICULTY));
         assert!(config.is_valid_proof(&message.1, &target));
+    }
+
+    #[test]
+    #[cfg(feature = "incremental")]
+    fn stepped_solve() {
+        let phrase = "Ex nihilo nihil fit.".to_owned();
+        let config = get_config();
+
+        let mut inter = None;
+        loop {
+            match config.stepped_prove_work(&phrase, 50000, 1000, inter) {
+                Ok(IncrementalSolve::Intermediate(result, nonce, prefix, difficulty)) => {
+                    println!("Current nonce {nonce}");
+                    inter = Some(IncrementalSolve::Intermediate(
+                        result, nonce, prefix, difficulty,
+                    ));
+                    continue;
+                }
+
+                Ok(IncrementalSolve::Work(w)) => {
+                    assert!(config.is_valid_proof(&w, &phrase));
+                    assert!(config.is_sufficient_difficulty(&w, DIFFICULTY));
+                    break;
+                }
+                Err(e) => panic!("{}", e),
+            };
+        }
     }
 }

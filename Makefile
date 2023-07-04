@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 define test_core
-	cargo test --no-fail-fast
+	cargo test --no-fail-fast --all-features
 endef
 
 default: ## Build library in debug mode
