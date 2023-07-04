@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["score",""]]};
+window.SIDEBAR_ITEMS = {"fn":["score"]};
